@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int            @id @default(autoincrement())
+  email        String
+  name         String?
+  username     String         @unique
+  password     String
+  profileImage String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  refreshToken RefreshToken[]
+  tweet        Tweet[]
+  mediaFiles   MediaFile[]
+  likes        Likes[]
+}
+
+model RefreshToken {
+  id    Int    @id @default(autoincrement())
+  token String @unique
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tweet {
+  id      Int    @id @default(autoincrement())
+  content String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  author   User @relation(fields: [authorId], references: [id])
+  authorId Int
+
+  replyTo    Tweet[]     @relation("replyToReplies")
+  replies    Tweet[]     @relation("replyToReplies")
+  mediaFiles MediaFile[]
+  likes      Likes[]
+}
+
+model MediaFile {
+  id  Int    @id @default(autoincrement())
+  url String
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  tweetId Int?
+  tweet   Tweet? @relation(fields: [tweetId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Likes {
+  tweet   Tweet @relation(fields: [tweetId], references: [id])
+  tweetId Int
+  user    User  @relation(fields: [userId], references: [id])
+  userId  Int
+
+  createdAt DateTime @default(now())
+
+  @@id([tweetId, userId])
+}
